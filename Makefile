@@ -10,7 +10,7 @@ IS_DOCKER_INSTALLED = $(shell which docker >> /dev/null 2>&1; echo $$?)
 #docker info
 ACCOUNT ?= abhishek09dh
 XFSQUOTAREPO ?= xfs_quota
-IMGTAG ?= v1.0
+IMGTAG ?= v1.1
 
 .PHONY: all
 all: deps go-deps fmt xfs-quota

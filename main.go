@@ -7,11 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"time"
 )
 
 var (
-	dir   = "/data/volumes/xfs_hostpath/"
-	limit = "5m"
+	dir           = "/data/volumes/xfs_hostpath/"
+	limit         = "5m"
+	dirNotCreated = true
+	sleepTime     = 180
 )
 
 const (
@@ -52,8 +55,20 @@ func main() {
 		log.Fatalf("Error mounting loopback device with project quota: %+v", err)
 	}
 
-	// Get the list of directories inside the hostpath created dir
-	files, err := getSubdirectories(dir)
+	var files []os.FileInfo
+	for dirNotCreated {
+		// Get the list of directories inside the hostpath created dir
+		files, err := getSubdirectories(dir)
+		if err != nil {
+			log.Fatalf("Error getting directory list: %+v", err)
+		}
+
+		if len(files) > 0 {
+			dirNotCreated = false
+		} else {
+			time.Sleep(time.Duration(sleepTime))
+		}
+	}
 
 	// Matching pattern
 	// Using MatchString() function
