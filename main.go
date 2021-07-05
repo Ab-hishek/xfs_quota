@@ -87,7 +87,7 @@ func main() {
 	var id string
 	id = "100"
 	// initialise project
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", dir+ files[0].Name(), " ", id+"'")}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", dir+files[0].Name(), " ", id+"'")}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error initializing project: %+v", err)
