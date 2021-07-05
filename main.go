@@ -39,12 +39,12 @@ func main() {
 	args = []string{"-t", "xfs", "-q", podVolumeMountPath + "/xfs1.32M"}
 	err = Run(mkfs, args)
 	if err != nil {
-		log.Fatalf("Error formatting file in xfs foramt: %+v", err)
+		log.Fatalf("Error formatting file in xfs format: %+v", err)
 	}
 	log.Println("Successfully formatted the sparse file.")
 
 	// create a directory where mount will occur
-	args = []string{"-p", podVolumeMountPath + dir}
+	args = []string{"-p", dir}
 
 	err = Run(mkdir, args)
 	if err != nil {
@@ -64,7 +64,7 @@ func main() {
 	log.Println("Looking for the hostpath directory created by OpenEBS:")
 	for dirNotCreated {
 		// Get the list of directories inside the hostpath created dir
-		files, err := getSubdirectories(podVolumeMountPath + dir)
+		files, err := getSubdirectories(dir)
 		if err != nil {
 			log.Fatalf("Error getting directory list: %+v", err)
 		}
@@ -87,7 +87,7 @@ func main() {
 	var id string
 	id = "100"
 	// initialise project
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s", "'project -s -p ", podVolumeMountPath+dir, files[0].Name(), " ", id+"'")}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", dir+ files[0].Name(), " ", id+"'")}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error initializing project: %+v", err)
@@ -95,7 +95,7 @@ func main() {
 	log.Println("Successfully created new sfs project.")
 
 	// set a 5m quota on project, id =100
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s%s%s", "'limit -p ", "bsoft=", limit, "bhard=", limit, " ", id+"'")}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'limit -p ", "bsoft="+limit+" bhard="+limit, id+"'", dir)}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error seeting project quota: %+v", err)
