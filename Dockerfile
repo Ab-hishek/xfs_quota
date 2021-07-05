@@ -1,6 +1,7 @@
 FROM golang:alpine
 
 RUN apk add --no-cache xfsprogs
+RUN apk add --no-cache util-linux
 
 WORKDIR /xfs_project
 

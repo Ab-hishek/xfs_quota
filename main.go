@@ -27,18 +27,20 @@ const (
 
 func main() {
 	// Create sparse file using seek, 32mb max size
-	args := []string{"-if=/dev/zero", "of=xfs.32M", "bs=1", "count=0", "seek=32M"}
+	args := []string{"if=/dev/zero", "of=xfs1.32M", "bs=1", "count=0", "seek=32M"}
 	err := Run(dd, args)
 	if err != nil {
 		log.Fatalf("Error creating sparse file using seek: %+v", err)
 	}
+	log.Println("Successfully created sparse file.")
 
 	// format in xfs format
-	args = []string{"-t", "xfs", "-q", "xfs.32M"}
+	args = []string{"-t", "xfs", "-q", "xfs1.32M"}
 	err = Run(mkfs, args)
 	if err != nil {
-		log.Fatalf("Error formatting file in xfs foramt %+v", err)
+		log.Fatalf("Error formatting file in xfs foramt: %+v", err)
 	}
+	log.Println("Successfully formatted the sparse file.")
 
 	// create a directory where mount will occur
 	args = []string{"-p", dir}
@@ -47,15 +49,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating a mount directory: %+v", err)
 	}
+	log.Println("Successfully created hostpath directory.")
 
 	// mount as loopback device with project quota enabled
-	args = []string{"-o", "loop,rw", "xfs.32M", "-o", "pquota", dir}
+	args = []string{"-o", "loop,rw", "xfs1.32M", "-o", "pquota", dir}
 	err = Run(mount, args)
 	if err != nil {
 		log.Fatalf("Error mounting loopback device with project quota: %+v", err)
 	}
+	log.Println("Successfully mounted loopback device with quota.")
 
 	var files []os.FileInfo
+	log.Println("Looking for the hostpath directory created by OpenEBS:")
 	for dirNotCreated {
 		// Get the list of directories inside the hostpath created dir
 		files, err := getSubdirectories(dir)
@@ -76,22 +81,25 @@ func main() {
 	if err != nil {
 		log.Fatalf("Directory name doesn't satisfy the matching criteria: %+v", err)
 	}
+	log.Println("Found hostpath volume created by OpenEBS.")
 
 	var id string
 	id = "100"
 	// initialise project
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s", "project -s -p ", dir, files[0].Name(), " ", id)}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s", "'project -s -p ", dir, files[0].Name(), " ", id+"'")}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error initializing project: %+v", err)
 	}
+	log.Println("Successfully created new sfs project.")
 
 	// set a 5m quota on project, id =100
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s%s%s", "limit -p ", "bsoft=", limit, "bhard=", limit, " ", id)}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s%s%s%s", "'limit -p ", "bsoft=", limit, "bhard=", limit, " ", id+"'")}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error seeting project quota: %+v", err)
 	}
+	log.Println("Successfully set quota onto the volume.")
 
 }
 
