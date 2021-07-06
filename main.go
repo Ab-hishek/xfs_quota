@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	dir                = "/data/volumes/xfs_hostpath/"
+	dir                = "/xfs-dir/xfs_disk/"
 	podVolumeMountPath = "/example"
 	limit              = "5m"
 	dirNotCreated      = true
@@ -28,7 +28,7 @@ const (
 
 func main() {
 	// Create sparse file using seek, 32mb max size
-	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs4.32M", "bs=1", "count=0", "seek=32M"}
+	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs7.32M", "bs=1", "count=0", "seek=32M"}
 	err := Run(dd, args)
 	if err != nil {
 		log.Fatalf("Error creating sparse file using seek: %+v", err)
@@ -36,7 +36,7 @@ func main() {
 	log.Println("Successfully created sparse file.")
 
 	// format in xfs format
-	args = []string{"-t", "xfs", "-f", "-q", podVolumeMountPath + "/xfs4.32M"}
+	args = []string{"-t", "xfs", "-f", "-q", podVolumeMountPath + "/xfs7.32M"}
 	err = Run(mkfs, args)
 	if err != nil {
 		log.Fatalf("Error formatting file in xfs format: %+v", err)
@@ -52,7 +52,7 @@ func main() {
 	log.Println("Successfully created hostpath directory.")
 
 	// mount as loopback device with project quota enabled
-	args = []string{"-o", "loop,rw " + podVolumeMountPath + "/xfs4.32M", "-o", "pquota", podVolumeMountPath + dir}
+	args = []string{"-o", "loop,rw,pquota", podVolumeMountPath + "/xfs7.32M", podVolumeMountPath + dir}
 	err = Run(mount, args)
 	if err != nil {
 		log.Fatalf("Error mounting loopback device with project quota: %+v", err)
@@ -63,7 +63,7 @@ func main() {
 	log.Println("Looking for the hostpath directory created by OpenEBS:")
 	for dirNotCreated {
 		// Get the list of directories inside the hostpath created dir
-		files, err := getSubdirectories(dir)
+		files, err := getSubdirectories(podVolumeMountPath + dir)
 		if err != nil {
 			log.Fatalf("Error getting directory list: %+v", err)
 		}
@@ -79,12 +79,12 @@ func main() {
 	// Using MatchString() function
 	_, err = regexp.MatchString(files[0].Name(), "pvc.*")
 	if err != nil {
-		log.Fatalf("Directory name doesn't satisfy the matching criteria: %+v", err)
+		log.Fatalf("Directory name doesn't satisfy the matching criteria(i.e pvc.*): %+v", err)
 	}
 	log.Println("Found hostpath volume created by OpenEBS.")
 
 	var id string
-	id = "100"
+	id = "500"
 	// initialise project
 	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", podVolumeMountPath+dir+files[0].Name(), " ", id+"'")}
 	err = Run(xfsQuota, args)
@@ -107,10 +107,8 @@ func Run(command string, args []string) error {
 	cmd := exec.Command(command, args...)
 	log.Printf("Args: %+v", cmd.Args)
 	log.Printf(cmd.String())
-	out, err := cmd.Output()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		output := string(out[:])
-		log.Println(output)
 		return err
 	}
 	return nil

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helper-hostpath-1
+  labels:
+    app: helper
+spec:
+  nodeName: node1-virtual-machine
+  securityContext:
+    runAsUser: 0
+  containers:
+    - name: xfs-quota
+      image: abhishek09dh/xfs_quota:v1.25
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+      volumeMounts:
+        - mountPath: /example
+          name: work-dir
+  volumes:
+    - hostPath:
+        path: /home/node1
+        type: Directory
+      name: work-dir
