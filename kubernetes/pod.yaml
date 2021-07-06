@@ -10,7 +10,7 @@ spec:
     runAsUser: 0
   containers:
     - name: xfs-quota
-      image: abhishek09dh/xfs_quota:v1.25
+      image: abhishek09dh/xfs_quota:v1.26
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true

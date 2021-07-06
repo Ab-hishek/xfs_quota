@@ -59,8 +59,8 @@ func main() {
 	}
 	log.Println("Successfully mounted loopback device with quota.")
 
-	var files []os.FileInfo
-	log.Println("Looking for the hostpath directory created by OpenEBS:")
+	pvcName := ""
+	log.Println("Looking for the hostpath directory created by OpenEBS...")
 	for dirNotCreated {
 		// Get the list of directories inside the hostpath created dir
 		files, err := getSubdirectories(podVolumeMountPath + dir)
@@ -69,24 +69,26 @@ func main() {
 		}
 
 		if len(files) > 0 {
-			dirNotCreated = false
+			// Matching pattern
+			// Using MatchString() function
+			match, err := regexp.MatchString("pvc.*", files[0].Name())
+			if err != nil {
+				log.Fatalf("Directory name doesn't satisfy the matching criteria(i.e pvc.*): %+v", err)
+			}
+			if match {
+				pvcName = files[0].Name()
+				log.Println("Found hostpath volume created by OpenEBS.")
+				dirNotCreated = false
+			}
 		} else {
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 		}
 	}
 
-	// Matching pattern
-	// Using MatchString() function
-	_, err = regexp.MatchString(files[0].Name(), "pvc.*")
-	if err != nil {
-		log.Fatalf("Directory name doesn't satisfy the matching criteria(i.e pvc.*): %+v", err)
-	}
-	log.Println("Found hostpath volume created by OpenEBS.")
-
 	var id string
 	id = "500"
 	// initialise project
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", podVolumeMountPath+dir+files[0].Name(), " ", id+"'")}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", podVolumeMountPath+dir+pvcName, " ", id+"'")}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error initializing project: %+v", err)
