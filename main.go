@@ -28,7 +28,7 @@ const (
 
 func main() {
 	// Create sparse file using seek, 32mb max size
-	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs3.32M", "bs=1", "count=0", "seek=32M"}
+	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs4.32M", "bs=1", "count=0", "seek=32M"}
 	err := Run(dd, args)
 	if err != nil {
 		log.Fatalf("Error creating sparse file using seek: %+v", err)
@@ -36,7 +36,7 @@ func main() {
 	log.Println("Successfully created sparse file.")
 
 	// format in xfs format
-	args = []string{"-t", "xfs", "-q", podVolumeMountPath + "/xfs3.32M", "-f"}
+	args = []string{"-t", "xfs", "-f", "-q", podVolumeMountPath + "/xfs4.32M"}
 	err = Run(mkfs, args)
 	if err != nil {
 		log.Fatalf("Error formatting file in xfs format: %+v", err)
@@ -52,7 +52,7 @@ func main() {
 	log.Println("Successfully created hostpath directory.")
 
 	// mount as loopback device with project quota enabled
-	args = []string{"-o", "loop,rw " + podVolumeMountPath + "/xfs3.32M", "-o", "pquota", podVolumeMountPath + dir}
+	args = []string{"-o", "loop,rw " + podVolumeMountPath + "/xfs4.32M", "-o", "pquota", podVolumeMountPath + dir}
 	err = Run(mount, args)
 	if err != nil {
 		log.Fatalf("Error mounting loopback device with project quota: %+v", err)
@@ -71,7 +71,7 @@ func main() {
 		if len(files) > 0 {
 			dirNotCreated = false
 		} else {
-			time.Sleep(time.Duration(sleepTime))
+			time.Sleep(time.Duration(sleepTime) * time.Second)
 		}
 	}
 

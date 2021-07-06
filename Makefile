@@ -10,7 +10,7 @@ IS_DOCKER_INSTALLED = $(shell which docker >> /dev/null 2>&1; echo $$?)
 #docker info
 ACCOUNT ?= abhishek09dh
 XFSQUOTAREPO ?= xfs_quota
-IMGTAG ?= v1.19
+IMGTAG ?= v1.23
 
 .PHONY: all
 all: deps go-deps fmt xfs-quota
@@ -61,6 +61,6 @@ xfs-quota:
 
 push:
 	@echo "------------------"
-	@echo "--> Pushing lvm-exporter image"
+	@echo "--> Pushing xfs_quota image"
 	@echo "------------------"
 	docker push ${ACCOUNT}/${XFSQUOTAREPO}:${IMGTAG}
