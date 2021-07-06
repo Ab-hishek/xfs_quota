@@ -10,7 +10,7 @@ IS_DOCKER_INSTALLED = $(shell which docker >> /dev/null 2>&1; echo $$?)
 #docker info
 ACCOUNT ?= abhishek09dh
 XFSQUOTAREPO ?= xfs_quota
-IMGTAG ?= v1.7
+IMGTAG ?= v1.19
 
 .PHONY: all
 all: deps go-deps fmt xfs-quota
@@ -55,7 +55,7 @@ vendor: go.mod go.sum go-deps
 
 xfs-quota:
 	@echo "------------------"
-	@echo "--> Build lvm-exporter image"
+	@echo "--> Build xfs_quota image"
 	@echo "------------------"
 	docker build -t $(ACCOUNT)/$(XFSQUOTAREPO):$(IMGTAG) -f Dockerfile .
 
