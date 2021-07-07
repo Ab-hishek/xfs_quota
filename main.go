@@ -107,6 +107,7 @@ func main() {
 
 func Run(command string, args []string) error {
 	cmd := exec.Command(command, args...)
+	cmd.Stderr = os.Stderr
 	log.Printf("Args: %+v", cmd.Args)
 	log.Printf(cmd.String())
 	_, err := cmd.CombinedOutput()
@@ -127,10 +128,17 @@ func Run(command string, args []string) error {
 }*/
 
 func getSubdirectories(pathName string) ([]os.FileInfo, error) {
+	var dirs []os.FileInfo
 	files, err := ioutil.ReadDir(pathName)
 	if err != nil {
 		return nil, err
 	}
 
-	return files, nil
+	for _, file := range files {
+		if file.IsDir() {
+			dirs = append(dirs, file)
+		}
+	}
+
+	return dirs, nil
 }
