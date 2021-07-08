@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	dir                = "/xfs-dir/xfs_disk/"
+	dir                = "/xfs-final/"
 	podVolumeMountPath = "/example"
 	limit              = "5m"
 	dirNotCreated      = true
@@ -28,7 +28,7 @@ const (
 
 func main() {
 	// Create sparse file using seek, 32mb max size
-	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs7.32M", "bs=1", "count=0", "seek=32M"}
+	args := []string{"if=/dev/zero", "of=" + podVolumeMountPath + "/xfs12.32M", "bs=1", "count=0", "seek=32M"}
 	err := Run(dd, args)
 	if err != nil {
 		log.Fatalf("Error creating sparse file using seek: %+v", err)
@@ -36,7 +36,7 @@ func main() {
 	log.Println("Successfully created sparse file.")
 
 	// format in xfs format
-	args = []string{"-t", "xfs", "-f", "-q", podVolumeMountPath + "/xfs7.32M"}
+	args = []string{"-t", "xfs", "-f", "-q", podVolumeMountPath + "/xfs12.32M"}
 	err = Run(mkfs, args)
 	if err != nil {
 		log.Fatalf("Error formatting file in xfs format: %+v", err)
@@ -52,7 +52,7 @@ func main() {
 	log.Println("Successfully created hostpath directory.")
 
 	// mount as loopback device with project quota enabled
-	args = []string{"-o", "loop,rw,pquota", podVolumeMountPath + "/xfs7.32M", podVolumeMountPath + dir}
+	args = []string{"-o", "loop,rw,pquota", podVolumeMountPath + "/xfs12.32M", podVolumeMountPath + dir}
 	err = Run(mount, args)
 	if err != nil {
 		log.Fatalf("Error mounting loopback device with project quota: %+v", err)
@@ -69,6 +69,7 @@ func main() {
 		}
 
 		if len(files) > 0 {
+			log.Printf("Directory present: %+v", files[0].Name())
 			// Matching pattern
 			// Using MatchString() function
 			match, err := regexp.MatchString("pvc.*", files[0].Name())
@@ -81,33 +82,37 @@ func main() {
 				dirNotCreated = false
 			}
 		} else {
+			log.Println("Directory empty")
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 		}
 	}
 
-	var id string
-	id = "500"
+	var projectId string
+	projectId = "500"
 	// initialise project
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "'project -s -p ", podVolumeMountPath+dir+pvcName, " ", id+"'")}
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s%s", "project -s -p ", podVolumeMountPath+dir+pvcName, " ", projectId), podVolumeMountPath + dir}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error initializing project: %+v", err)
 	}
-	log.Println("Successfully created new sfs project.")
+	log.Println("Successfully created new xfs project.")
 
-	// set a 5m quota on project, id =100
-	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s", "'limit -p ", "bsoft="+limit+" bhard="+limit, id+"'"), podVolumeMountPath + dir}
+	// set a 5m quota on project, id=500
+	args = []string{"-x", "-c", fmt.Sprintf("%s%s%s", "limit -p ", "bsoft="+limit+" bhard="+limit+" ", projectId), podVolumeMountPath + dir}
 	err = Run(xfsQuota, args)
 	if err != nil {
 		log.Fatalf("Error seeting project quota: %+v", err)
 	}
 	log.Println("Successfully set quota onto the volume.")
 
+	for true {
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+	}
+
 }
 
 func Run(command string, args []string) error {
 	cmd := exec.Command(command, args...)
-	cmd.Stderr = os.Stderr
 	log.Printf("Args: %+v", cmd.Args)
 	log.Printf(cmd.String())
 	_, err := cmd.CombinedOutput()
